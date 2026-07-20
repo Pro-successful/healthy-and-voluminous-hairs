@@ -1,138 +1,232 @@
 JavaScript
+
+
+
+
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
 
-export default function HairApp() {
-  const [currentStep, setCurrentStep] = useState('welcome'); // welcome, scan, analyzing, results
-  const [image, setImage] = useState(null);
-  const [analysisData, setAnalysisData] = useState(null);
+export default function AdvancedHairApp() {
+  const [currentTab, setCurrentTab] = useState('analyze'); // analyze, tracker, scanner
+  const [step, setStep] = useState('welcome'); // welcome, input, results
+  const [barcodeText, setBarcodeText] = useState('');
+  const [scannedProductInfo, setScannedProductInfo] = useState(null);
 
-  // 1. Pick Image from Gallery or Camera
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
-      setCurrentStep('scan');
-    }
+  // Mock Analysis Results including New Feature Metrics
+  const mockAnalysis = {
+    volumeScore: 58,
+    porosity: 'High Porosity (Absorbs quickly, loses moisture instantly)',
+    waterRisk: 'High Hardness detected in your area (Mineral buildup flattening roots)',
+    routine: [
+      { name: 'Apple Cider Vinegar Scalp Rinse', function: 'Removes local hard water mineral weight' },
+      { name: 'Hydrolyzed Rice Protein Spray', function: 'Plumps cortex structure for immediate 20% visual thickness' }
+    ]
   };
 
-  // 2. Mock API call sending image to backend AI model
-  const runHairAnalysis = () => {
-    setCurrentStep('analyzing');
-    setTimeout(() => {
-      setAnalysisData({
-        density: 'Medium-Low',
-        scalpCondition: 'Slightly Dry',
-        volumeScore: '45/100',
-        recommendations: [
-          { id: '1', title: 'Biotin Volumizing Shampoo', type: 'Product', reason: 'Lifts roots without weighing strands down.' },
-          { id: '2', title: 'Rosemary Scalp Serum', type: 'Treatment', reason: 'Stimulates follicle circulation to boost growth density.' }
-        ]
+  // Ingredient Database Simulation for Feature 2
+  const handleIngredientCheck = () => {
+    const product = barcodeText.trim().toLowerCase();
+    if (product.includes('sulfate') || product.includes('dmdm')) {
+      setScannedProductInfo({
+        status: 'Unsafe for Volume',
+        color: '#E74C3C',
+        reason: 'Contains heavy surfactants that strip natural moisture, causing the scalp to overproduce oils that flatten roots.'
       });
-      setCurrentStep('results');
-    }, 3000); // 3-second simulation delay
+    } else {
+      setScannedProductInfo({
+        status: 'Volume Approved',
+        color: '#2ECC71',
+        reason: 'Clean formula. Formulated with lightweight humectants that expand hair fiber diameter safely.'
+      });
+    }
   };
 
   return (
     <View style={styles.container}>
-      {/* WELCOME SCREEN */}
-      {currentStep === 'welcome' && (
-        <View style={styles.centerContent}>
-          <Text style={styles.title}>StrandAI</Text>
-          <Text style={styles.subtitle}>Unlock full, healthy, voluminous hair through personalized vision analysis.</Text>
-          <TouchableOpacity style={styles.primaryButton} onPress={() => setCurrentStep('scan')}>
-            <Text style={styles.buttonText}>Get Started</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      {/* APP TITLE BAR */}
+      <View style={styles.appBar}>
+        <Text style={styles.appTitle}>StrandAI Pro</Text>
+        <Text style={styles.appBadge}>AI Trichologist</Text>
+      </View>
 
-      {/* UPLOAD / SCAN SCREEN */}
-      {currentStep === 'scan' && (
-        <View style={styles.centerContent}>
-          <Text style={styles.headerText}>Analyze Your Hair</Text>
-          <Text style={styles.bodyText}>Upload a clear photo of your crown or parting line under natural light.</Text>
-          
-          <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
-            {image ? (
-              <Image source={{ uri: image }} style={styles.previewImage} />
-            ) : (
-              <Text style={styles.uploadPlaceholder}>Tap to Select Photo</Text>
+      {/* CORE SCREENS BASED ON NAVIGATION TAB */}
+      <ScrollView contentContainerStyle={styles.mainScroll}>
+        
+        {/* TAB 1: AI HAIR DIAGNOSIS & ENVIRONMENTAL ANALYSIS */}
+        {currentTab === 'analyze' && (
+          <View>
+            {step === 'welcome' && (
+              <View style={styles.heroSection}>
+                <Text style={styles.sectionHeader}>Scan & Diagnose Strands</Text>
+                <Text style={styles.bodyText}>Analyze cuticles, local water mineral density, and current baseline volume score.</Text>
+                <TouchableOpacity style={styles.actionButton} onPress={() => setStep('results')}>
+                  <Text style={styles.actionButtonText}>Launch Smart Scan</Text>
+                </TouchableOpacity>
+              </View>
             )}
-          </TouchableOpacity>
 
-          {image && (
-            <TouchableOpacity style={styles.primaryButton} onPress={runHairAnalysis}>
-              <Text style={styles.buttonText}>Analyze Hair Now</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
+            {step === 'results' && (
+              <View>
+                <Text style={styles.sectionHeader}>🔬 Structural Diagnostic Report</Text>
+                
+                <View style={styles.metricRow}>
+                  <View style={styles.metricBlock}>
+                    <Text style={styles.metricLabel}>Volume Score</Text>
+                    <Text style={styles.metricVal}>{mockAnalysis.volumeScore}%</Text>
+                  </View>
+                  <View style={styles.metricBlock}>
+                    <Text style={styles.metricLabel}>Porosity Type</Text>
+                    <Text style={[styles.metricVal, { fontSize: 14 }]}>High</Text>
+                  </View>
+                </View>
 
-      {/* ANALYZING SCREEN */}
-      {currentStep === 'analyzing' && (
-        <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color="#6C5CE7" />
-          <Text style={[styles.bodyText, { marginTop: 20 }]}>Evaluating hair density and structural volume...</Text>
-        </View>
-      )}
+                {/* Environmental Awareness Card */}
+                <View style={[styles.alertCard, { borderColor: '#E67E22' }]}>
+                  <Text style={styles.alertTitle}>📍 Regional Water Quality Impact</Text>
+                  <Text style={styles.alertBody}>{mockAnalysis.waterRisk}</Text>
+                </View>
 
-      {/* RESULTS & SOLUTIONS SCREEN */}
-      {currentStep === 'results' && analysisData && (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.headerText}>Your Hair Analysis</Text>
-          
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Volume Score: {analysisData.volumeScore}</Text>
-            <Text style={styles.metricText}>• Overall Density: {analysisData.density}</Text>
-            <Text style={styles.metricText}>• Scalp Status: {analysisData.scalpCondition}</Text>
+                <Text style={styles.subHeader}>Targeted Thickening Routine</Text>
+                {mockAnalysis.routine.map((item, index) => (
+                  <View key={index} style={styles.routineItem}>
+                    <Text style={styles.routineName}>{item.name}</Text>
+                    <Text style={styles.routineDesc}>{item.function}</Text>
+                  </View>
+                ))}
+
+                <TouchableOpacity style={styles.backButton} onPress={() => setStep('welcome')}>
+                  <Text style={styles.backButtonText}>Re-Scan Strands</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
+        )}
 
-          <Text style={styles.sectionTitle}>Recommended Routine</Text>
-          {analysisData.recommendations.map((item) => (
-            <View key={item.id} style={styles.productCard}>
-              <Text style={styles.productBadge}>{item.type}</Text>
-              <Text style={styles.productName}>{item.title}</Text>
-              <Text style={styles.productReason}>{item.reason}</Text>
+        {/* TAB 2: INGREDIENT & BARCODE SCANNER */}
+        {currentTab === 'scanner' && (
+          <View style={styles.paddedContent}>
+            <Text style={styles.sectionHeader}>Ingredient & Product Scanner</Text>
+            <Text style={styles.bodyText}>Type an ingredient or paste a product formulation composition list below to check for follicle-clogging chemicals.</Text>
+            
+            <TextInput 
+              style={styles.inputField}
+              placeholder="e.g. Sodium Lauryl Sulfate, Biotin, Dimethicone"
+              value={barcodeText}
+              onChangeText={setBarcodeText}
+            />
+
+            <TouchableOpacity style={styles.actionButton} onPress={handleIngredientCheck}>
+              <Text style={styles.actionButtonText}>Verify Product Safety</Text>
+            </TouchableOpacity>
+
+            {scannedProductInfo && (
+              <View style={[styles.scannerResult, { backgroundColor: scannedProductInfo.color + '15', borderColor: scannedProductInfo.color }]}>
+                <Text style={[styles.resultStatus, { color: scannedProductInfo.color }]}>{scannedProductInfo.status}</Text>
+                <Text style={styles.resultReason}>{scannedProductInfo.reason}</Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* TAB 3: VISUAL PROGRESS TRACKER */}
+        {currentTab === 'tracker' && (
+          <View style={styles.paddedContent}>
+            <Text style={styles.sectionHeader}>Growth & Density Tracker</Text>
+            <Text style={styles.bodyText}>Compare root density metrics and hairline fullness across your personal care timeline.</Text>
+            
+            {/* Visual Timeline Split Simulation */}
+            <View style={styles.timelineContainer}>
+              <View style={styles.timelineColumn}>
+                <Text style={styles.timelineDate}>Baseline (Month 0)</Text>
+                <View style={[styles.mockPhoto, { backgroundColor: '#E2E8F0' }]}>
+                  <Text style={styles.photoText}>Density: Flat{"\n"}Score: 42%</Text>
+                </View>
+              </View>
+              <View style={styles.timelineColumn}>
+                <Text style={styles.timelineDate}>Current (Month 2)</Text>
+                <View style={[styles.mockPhoto, { backgroundColor: '#D6E4FF' }]}>
+                  <Text style={styles.photoText}>Density: Active{"\n"}Score: 58%</Text>
+                </View>
+              </View>
             </View>
-          ))}
 
-          <TouchableOpacity style={styles.secondaryButton} onPress={() => { setImage(null); setCurrentStep('welcome'); }}>
-            <Text style={styles.secondaryButtonText}>Scan Again</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      )}
+            <View style={styles.progressSummary}>
+              <Text style={styles.summaryTitle}>🎉 Realized Improvements</Text>
+              <Text style={styles.summaryText}>Your hair crown density expanded by **16%** since incorporating the recommended protein solutions.</Text>
+            </View>
+          </View>
+        )}
+
+      </ScrollView>
+
+      {/* CORE BOTTOM NAVIGATION BAR */}
+      <View style={styles.bottomNav}>
+        <TouchableOpacity style={[styles.navItem, currentTab === 'analyze' && styles.activeNavItem]} onPress={() => setCurrentTab('analyze')}>
+          <Text style={[styles.navText, currentTab === 'analyze' && styles.activeNavText]}>🔬 Diagnostics</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={[styles.navItem, currentTab === 'scanner' && styles.activeNavItem]} onPress={() => setCurrentTab('scanner')}>
+          <Text style={[styles.navText, currentTab === 'scanner' && styles.activeNavText]}>🧪 Bio-Check</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={[styles.navItem, currentTab === 'tracker' && styles.activeNavItem]} onPress={() => setCurrentTab('tracker')}>
+          <Text style={[styles.navText, currentTab === 'tracker' && styles.activeNavText]}>📈 Progress</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAF9F6', padding: 20 },
-  centerContent: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 15 },
-  scrollContent: { paddingTop: 60, paddingBottom: 40 },
-  title: { fontSize: 36, fontWeight: '800', color: '#2D3436', marginBottom: 12 },
-  subtitle: { fontSize: 16, textAlign: 'center', color: '#636E72', lineHeight: 24, marginBottom: 40 },
-  headerText: { fontSize: 26, fontWeight: '700', color: '#2D3436', marginBottom: 10, textAlign: 'center' },
-  bodyText: { fontSize: 14, color: '#636E72', textAlign: 'center', marginBottom: 30 },
-  primaryButton: { backgroundColor: '#6C5CE7', paddingVertical: 15, paddingHorizontal: 40, borderRadius: 30, width: '100%', alignItems: 'center' },
-  buttonText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
-  uploadBox: { width: '100%', height: 250, backgroundColor: '#FFF', borderRadius: 20, borderWidth: 2, borderColor: '#DFE6E9', borderStyle: 'dashed', justifyContent: 'center', alignItems: 'center', marginBottom: 20, overflow: 'hidden' },
-  uploadPlaceholder: { color: '#B2BEC3', fontSize: 16 },
-  previewImage: { width: '100%', height: '100%' },
-  card: { backgroundColor: '#FFF', padding: 20, borderRadius: 16, marginBottom: 25, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10 },
-  cardTitle: { fontSize: 20, fontWeight: '700', color: '#6C5CE7', marginBottom: 12 },
-  metricText: { fontSize: 15, color: '#2D3436', marginVertical: 4 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#2D3436', marginBottom: 15 },
-  productCard: { backgroundColor: '#FFF', padding: 16, borderRadius: 12, marginBottom: 12, borderWidth: 1, borderColor: '#F1F2F6' },
-  productBadge: { alignSelf: 'flex-start', backgroundColor: '#E1D9FC', color: '#6C5CE7', fontSize: 11, fontWeight: '700', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, marginBottom: 6 },
-  productName: { fontSize: 16, fontWeight: '600', color: '#2D3436' },
-  productReason: { fontSize: 13, color: '#636E72', marginTop: 4 },
-  secondaryButton: { marginTop: 20, padding: 15, alignItems: 'center' },
-  secondaryButtonText: { color: '#6C5CE7', fontWeight: '600' }
+  container: { flex: 1, backgroundColor: '#FAF9F6' },
+  appBar: { paddingTop: 60, paddingBottom: 15, paddingHorizontal: 20, backgroundColor: '#FFF', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderColor: '#F1F2F6' },
+  appTitle: { fontSize: 20, fontWeight: '800', color: '#2C3436' },
+  appBadge: { backgroundColor: '#6C5CE7', color: '#FFF', fontSize: 11, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, fontWeight: '700' },
+  mainScroll: { padding: 20, paddingBottom: 100 },
+  paddedContent: { width: '100%' },
+  heroSection: { alignItems: 'center', marginTop: 40 },
+  sectionHeader: { fontSize: 22, fontWeight: '700', color: '#2D3436', marginBottom: 8 },
+  subHeader: { fontSize: 16, fontWeight: '700', color: '#2D3436', marginTop: 25, marginBottom: 12 },
+  bodyText: { fontSize: 14, color: '#636E72', textAlign: 'center', lineHeight: 22, marginBottom: 25 },
+  actionButton: { backgroundColor: '#6C5CE7', paddingVertical: 14, width: '100%', borderRadius: 12, alignItems: 'center', marginVertical: 10 },
+  actionButtonText: { color: '#FFF', fontSize: 15, fontWeight: '600' },
+  backButton: { alignment: 'center', marginTop: 30, padding: 10 },
+  backButtonText: { color: '#6C5CE7', textAlign: 'center', fontWeight: '600' },
+  
+  /* Metric UI Styling */
+  metricRow: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 15 },
+  metricBlock: { width: '48%', backgroundColor: '#FFF', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#EEF0F2', alignItems: 'center' },
+  metricLabel: { fontSize: 12, color: '#A0AEC0', marginBottom: 4, fontWeight: '600' },
+  metricVal: { fontSize: 24, fontWeight: '800', color: '#2D3436' },
+  
+  /* Feature Specific Card Interfaces */
+  alertCard: { backgroundColor: '#FFFEEB', borderWidth: 1, padding: 16, borderRadius: 12, marginVertical: 10 },
+  alertTitle: { fontSize: 14, fontWeight: '700', color: '#D35400', marginBottom: 4 },
+  alertBody: { fontSize: 13, color: '#57606F', lineHeight: 18 },
+  routineItem: { backgroundColor: '#FFF', padding: 14, borderRadius: 10, marginBottom: 10, borderWidth: 1, borderColor: '#E2E8F0' },
+  routineName: { fontSize: 15, fontWeight: '600', color: '#2D3436' },
+  routineDesc: { fontSize: 13, color: '#747D8C', marginTop: 2 },
+  
+  /* Input & Product Analysis Engine Elements */
+  inputField: { backgroundColor: '#FFF', borderWidth: 1, borderColor: '#DFE6E9', padding: 14, borderRadius: 10, width: '100%', fontSize: 14, marginBottom: 10 },
+  scannerResult: { borderWidth: 1, borderRadius: 12, padding: 16, marginTop: 20 },
+  resultStatus: { fontSize: 16, fontWeight: '700', marginBottom: 6 },
+  resultReason: { fontSize: 13, color: '#2C3436', lineHeight: 19 },
+  
+  /* Timeline Elements */
+  timelineContainer: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 15 },
+  timelineColumn: { width: '48%' },
+  timelineDate: { fontSize: 12, fontWeight: '600', color: '#747D8C', marginBottom: 6, textAlign: 'center' },
+  mockPhoto: { height: 140, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  photoText: { textAlign: 'center', fontSize: 13, fontWeight: '600', color: '#4A5568', lineHeight: 18 },
+  progressSummary: { backgroundColor: '#EDF2F7', padding: 16, borderRadius: 12, marginTop: 15 },
+  summaryTitle: { fontSize: 14, fontWeight: '700', color: '#2B6CB0', marginBottom: 4 },
+  summaryText: { fontSize: 13, color: '#4A5568', lineHeight: 18 },
+
+  /* Bottom Nav Mechanics */
+  bottomNav: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 75, backgroundColor: '#FFF', flexDirection: 'row', borderTopWidth: 1, borderColor: '#E2E8F0', paddingBottom: 15 },
+  navItem: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  activeNavItem: { backgroundColor: '#F8F9FA' },
+  navText: { fontSize: 12, color: '#A0AEC0', fontWeight: '500' },
+  activeNavText: { color: '#6C5CE7', fontWeight: '700' }
 });
