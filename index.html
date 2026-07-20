@@ -1,0 +1,138 @@
+JavaScript
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+
+export default function HairApp() {
+  const [currentStep, setCurrentStep] = useState('welcome'); // welcome, scan, analyzing, results
+  const [image, setImage] = useState(null);
+  const [analysisData, setAnalysisData] = useState(null);
+
+  // 1. Pick Image from Gallery or Camera
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+      setCurrentStep('scan');
+    }
+  };
+
+  // 2. Mock API call sending image to backend AI model
+  const runHairAnalysis = () => {
+    setCurrentStep('analyzing');
+    setTimeout(() => {
+      setAnalysisData({
+        density: 'Medium-Low',
+        scalpCondition: 'Slightly Dry',
+        volumeScore: '45/100',
+        recommendations: [
+          { id: '1', title: 'Biotin Volumizing Shampoo', type: 'Product', reason: 'Lifts roots without weighing strands down.' },
+          { id: '2', title: 'Rosemary Scalp Serum', type: 'Treatment', reason: 'Stimulates follicle circulation to boost growth density.' }
+        ]
+      });
+      setCurrentStep('results');
+    }, 3000); // 3-second simulation delay
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* WELCOME SCREEN */}
+      {currentStep === 'welcome' && (
+        <View style={styles.centerContent}>
+          <Text style={styles.title}>StrandAI</Text>
+          <Text style={styles.subtitle}>Unlock full, healthy, voluminous hair through personalized vision analysis.</Text>
+          <TouchableOpacity style={styles.primaryButton} onPress={() => setCurrentStep('scan')}>
+            <Text style={styles.buttonText}>Get Started</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* UPLOAD / SCAN SCREEN */}
+      {currentStep === 'scan' && (
+        <View style={styles.centerContent}>
+          <Text style={styles.headerText}>Analyze Your Hair</Text>
+          <Text style={styles.bodyText}>Upload a clear photo of your crown or parting line under natural light.</Text>
+          
+          <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
+            {image ? (
+              <Image source={{ uri: image }} style={styles.previewImage} />
+            ) : (
+              <Text style={styles.uploadPlaceholder}>Tap to Select Photo</Text>
+            )}
+          </TouchableOpacity>
+
+          {image && (
+            <TouchableOpacity style={styles.primaryButton} onPress={runHairAnalysis}>
+              <Text style={styles.buttonText}>Analyze Hair Now</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      {/* ANALYZING SCREEN */}
+      {currentStep === 'analyzing' && (
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large" color="#6C5CE7" />
+          <Text style={[styles.bodyText, { marginTop: 20 }]}>Evaluating hair density and structural volume...</Text>
+        </View>
+      )}
+
+      {/* RESULTS & SOLUTIONS SCREEN */}
+      {currentStep === 'results' && analysisData && (
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <Text style={styles.headerText}>Your Hair Analysis</Text>
+          
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Volume Score: {analysisData.volumeScore}</Text>
+            <Text style={styles.metricText}>• Overall Density: {analysisData.density}</Text>
+            <Text style={styles.metricText}>• Scalp Status: {analysisData.scalpCondition}</Text>
+          </View>
+
+          <Text style={styles.sectionTitle}>Recommended Routine</Text>
+          {analysisData.recommendations.map((item) => (
+            <View key={item.id} style={styles.productCard}>
+              <Text style={styles.productBadge}>{item.type}</Text>
+              <Text style={styles.productName}>{item.title}</Text>
+              <Text style={styles.productReason}>{item.reason}</Text>
+            </View>
+          ))}
+
+          <TouchableOpacity style={styles.secondaryButton} onPress={() => { setImage(null); setCurrentStep('welcome'); }}>
+            <Text style={styles.secondaryButtonText}>Scan Again</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#FAF9F6', padding: 20 },
+  centerContent: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 15 },
+  scrollContent: { paddingTop: 60, paddingBottom: 40 },
+  title: { fontSize: 36, fontWeight: '800', color: '#2D3436', marginBottom: 12 },
+  subtitle: { fontSize: 16, textAlign: 'center', color: '#636E72', lineHeight: 24, marginBottom: 40 },
+  headerText: { fontSize: 26, fontWeight: '700', color: '#2D3436', marginBottom: 10, textAlign: 'center' },
+  bodyText: { fontSize: 14, color: '#636E72', textAlign: 'center', marginBottom: 30 },
+  primaryButton: { backgroundColor: '#6C5CE7', paddingVertical: 15, paddingHorizontal: 40, borderRadius: 30, width: '100%', alignItems: 'center' },
+  buttonText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
+  uploadBox: { width: '100%', height: 250, backgroundColor: '#FFF', borderRadius: 20, borderWidth: 2, borderColor: '#DFE6E9', borderStyle: 'dashed', justifyContent: 'center', alignItems: 'center', marginBottom: 20, overflow: 'hidden' },
+  uploadPlaceholder: { color: '#B2BEC3', fontSize: 16 },
+  previewImage: { width: '100%', height: '100%' },
+  card: { backgroundColor: '#FFF', padding: 20, borderRadius: 16, marginBottom: 25, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10 },
+  cardTitle: { fontSize: 20, fontWeight: '700', color: '#6C5CE7', marginBottom: 12 },
+  metricText: { fontSize: 15, color: '#2D3436', marginVertical: 4 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#2D3436', marginBottom: 15 },
+  productCard: { backgroundColor: '#FFF', padding: 16, borderRadius: 12, marginBottom: 12, borderWidth: 1, borderColor: '#F1F2F6' },
+  productBadge: { alignSelf: 'flex-start', backgroundColor: '#E1D9FC', color: '#6C5CE7', fontSize: 11, fontWeight: '700', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, marginBottom: 6 },
+  productName: { fontSize: 16, fontWeight: '600', color: '#2D3436' },
+  productReason: { fontSize: 13, color: '#636E72', marginTop: 4 },
+  secondaryButton: { marginTop: 20, padding: 15, alignItems: 'center' },
+  secondaryButtonText: { color: '#6C5CE7', fontWeight: '600' }
+});
